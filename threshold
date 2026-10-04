@@ -1,0 +1,17 @@
+module threshold(
+    input wire [12:0] magnitude,
+    input wire [12:0] threshold_value,
+
+    output reg [7:0] edge_pixel
+);
+
+    always @(*) begin
+
+        if (magnitude >= threshold_value)
+            edge_pixel = 8'd255;
+        else
+            edge_pixel = 8'd0;
+
+    end
+
+endmodule
