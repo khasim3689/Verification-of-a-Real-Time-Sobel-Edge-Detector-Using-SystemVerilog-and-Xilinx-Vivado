@@ -1,0 +1,182 @@
+module sobel_tb;
+
+    parameter IMG_WIDTH  = 8;
+    parameter IMG_HEIGHT = 8;
+
+    reg clk;
+    reg reset;
+
+    reg pixel_valid;
+    reg [7:0] pixel_in;
+    reg [15:0] column;
+
+    reg [12:0] threshold_value;
+
+    wire [7:0] edge_pixel;
+    wire edge_valid;
+
+    wire signed [11:0] gx;
+    wire signed [11:0] gy;
+
+    wire [12:0] magnitude;
+
+    integer row;
+    integer col;
+
+
+    // =========================================
+    // DUT
+    // =========================================
+
+    sobel_top #(
+        .IMG_WIDTH(IMG_WIDTH)
+    ) DUT (
+        .clk(clk),
+        .reset(reset),
+
+        .pixel_valid(pixel_valid),
+        .pixel_in(pixel_in),
+        .column(column),
+
+        .threshold_value(threshold_value),
+
+        .edge_pixel(edge_pixel),
+        .edge_valid(edge_valid),
+
+        .gx(gx),
+        .gy(gy),
+
+        .magnitude(magnitude)
+    );
+
+
+    // =========================================
+    // CLOCK
+    // =========================================
+
+    initial begin
+
+        clk = 1'b0;
+
+        forever #5 clk = ~clk;
+
+    end
+
+
+    // =========================================
+    // INITIAL VALUES
+    // =========================================
+
+    initial begin
+
+        reset = 1'b1;
+
+        pixel_valid = 1'b0;
+
+        pixel_in = 8'd0;
+
+        column = 16'd0;
+
+        threshold_value = 13'd100;
+
+        row = 0;
+        col = 0;
+
+    end
+
+
+    // =========================================
+    // RESET
+    // =========================================
+
+    initial begin
+
+        // Reset for 4 clock cycles
+
+        #40;
+
+        reset = 1'b0;
+
+    end
+
+
+    // =========================================
+    // IMAGE INPUT
+    // =========================================
+
+    initial begin
+
+        // Wait until reset is completed
+
+        #50;
+
+        for (row = 0; row < IMG_HEIGHT; row = row + 1) begin
+
+            for (col = 0; col < IMG_WIDTH; col = col + 1) begin
+
+                @(negedge clk);
+
+                pixel_valid = 1'b1;
+
+                column = col;
+
+                // Left half = dark
+
+                if (col < 4)
+                    pixel_in = 8'd20;
+
+                // Right half = bright
+
+                else
+                    pixel_in = 8'd220;
+
+            end
+
+        end
+
+
+        // Stop input
+
+        @(negedge clk);
+
+        pixel_valid = 1'b0;
+
+        pixel_in = 8'd0;
+
+        column = 16'd0;
+
+
+        // Wait for output
+
+        #100;
+
+        $finish;
+
+    end
+
+
+    // =========================================
+    // DISPLAY
+    // =========================================
+
+    always @(posedge clk) begin
+
+        if (edge_valid) begin
+
+            $display(
+                "TIME=%0t | ROW=%0d | COL=%0d | PIXEL=%0d | GX=%0d | GY=%0d | MAG=%0d | EDGE=%0d",
+                $time,
+                row,
+                column,
+                pixel_in,
+                gx,
+                gy,
+                magnitude,
+                edge_pixel
+            );
+
+        end
+
+    end
+
+endmodule
