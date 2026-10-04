@@ -1,0 +1,161 @@
+module sobel_top #(
+    parameter IMG_WIDTH = 8
+)(
+    input wire clk,
+    input wire reset,
+
+    input wire pixel_valid,
+    input wire [7:0] pixel_in,
+    input wire [15:0] column,
+
+    input wire [12:0] threshold_value,
+
+    output wire [7:0] edge_pixel,
+    output reg edge_valid,
+
+    output wire signed [11:0] gx,
+    output wire signed [11:0] gy,
+
+    output wire [12:0] magnitude
+);
+
+    wire [7:0] pixel_top;
+    wire [7:0] pixel_middle;
+    wire [7:0] pixel_bottom;
+
+    wire [7:0] p11, p12, p13;
+    wire [7:0] p21, p22, p23;
+    wire [7:0] p31, p32, p33;
+
+
+    // Initialize edge_valid
+    initial begin
+        edge_valid = 1'b0;
+    end
+
+
+    // ==========================================
+    // PIXEL BRAM
+    // ==========================================
+
+    pixel_bram #(
+        .IMG_WIDTH(IMG_WIDTH)
+    ) U_BRAM (
+        .clk(clk),
+        .reset(reset),
+        .pixel_valid(pixel_valid),
+        .pixel_in(pixel_in),
+        .column(column),
+
+        .pixel_top(pixel_top),
+        .pixel_middle(pixel_middle),
+        .pixel_bottom(pixel_bottom)
+    );
+
+
+    // ==========================================
+    // 3x3 WINDOW
+    // ==========================================
+
+    window_3x3 U_WINDOW (
+        .clk(clk),
+        .reset(reset),
+        .pixel_valid(pixel_valid),
+
+        .pixel_top(pixel_top),
+        .pixel_middle(pixel_middle),
+        .pixel_bottom(pixel_bottom),
+
+        .p11(p11),
+        .p12(p12),
+        .p13(p13),
+
+        .p21(p21),
+        .p22(p22),
+        .p23(p23),
+
+        .p31(p31),
+        .p32(p32),
+        .p33(p33)
+    );
+
+
+    // ==========================================
+    // SOBEL GX
+    // ==========================================
+
+    sobel_gx U_GX (
+        .p11(p11),
+        .p12(p12),
+        .p13(p13),
+
+        .p21(p21),
+        .p22(p22),
+        .p23(p23),
+
+        .p31(p31),
+        .p32(p32),
+        .p33(p33),
+
+        .gx(gx)
+    );
+
+
+    // ==========================================
+    // SOBEL GY
+    // ==========================================
+
+    sobel_gy U_GY (
+        .p11(p11),
+        .p12(p12),
+        .p13(p13),
+
+        .p21(p21),
+        .p22(p22),
+        .p23(p23),
+
+        .p31(p31),
+        .p32(p32),
+        .p33(p33),
+
+        .gy(gy)
+    );
+
+
+    // ==========================================
+    // GRADIENT MAGNITUDE
+    // ==========================================
+
+    gradient_magnitude U_MAG (
+        .gx(gx),
+        .gy(gy),
+        .magnitude(magnitude)
+    );
+
+
+    // ==========================================
+    // THRESHOLD
+    // ==========================================
+
+    threshold U_THRESHOLD (
+        .magnitude(magnitude),
+        .threshold_value(threshold_value),
+        .edge_pixel(edge_pixel)
+    );
+
+
+    // ==========================================
+    // EDGE VALID
+    // ==========================================
+
+    always @(posedge clk) begin
+
+        if (reset)
+            edge_valid <= 1'b0;
+
+        else
+            edge_valid <= pixel_valid;
+
+    end
+
+endmodule
