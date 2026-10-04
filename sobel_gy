@@ -1,0 +1,28 @@
+module sobel_gy(
+    input wire [7:0] p11,
+    input wire [7:0] p12,
+    input wire [7:0] p13,
+
+    input wire [7:0] p21,
+    input wire [7:0] p22,
+    input wire [7:0] p23,
+
+    input wire [7:0] p31,
+    input wire [7:0] p32,
+    input wire [7:0] p33,
+
+    output reg signed [11:0] gy
+);
+
+    always @(*) begin
+
+        gy = -$signed({1'b0,p11})
+             -($signed({1'b0,p12}) * 2)
+             -$signed({1'b0,p13})
+             +$signed({1'b0,p31})
+             +($signed({1'b0,p32}) * 2)
+             +$signed({1'b0,p33});
+
+    end
+
+endmodule
