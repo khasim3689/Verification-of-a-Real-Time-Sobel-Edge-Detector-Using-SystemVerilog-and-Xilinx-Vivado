@@ -1,0 +1,82 @@
+module window_3x3(
+
+    input wire clk,
+    input wire reset,
+    input wire pixel_valid,
+
+    input wire [7:0] pixel_top,
+    input wire [7:0] pixel_middle,
+    input wire [7:0] pixel_bottom,
+
+    output reg [7:0] p11,
+    output reg [7:0] p12,
+    output reg [7:0] p13,
+
+    output reg [7:0] p21,
+    output reg [7:0] p22,
+    output reg [7:0] p23,
+
+    output reg [7:0] p31,
+    output reg [7:0] p32,
+    output reg [7:0] p33
+);
+
+
+    // Initial values for simulation
+    initial begin
+
+        p11 = 8'd0;
+        p12 = 8'd0;
+        p13 = 8'd0;
+
+        p21 = 8'd0;
+        p22 = 8'd0;
+        p23 = 8'd0;
+
+        p31 = 8'd0;
+        p32 = 8'd0;
+        p33 = 8'd0;
+
+    end
+
+
+    always @(posedge clk) begin
+
+        if (reset) begin
+
+            p11 <= 8'd0;
+            p12 <= 8'd0;
+            p13 <= 8'd0;
+
+            p21 <= 8'd0;
+            p22 <= 8'd0;
+            p23 <= 8'd0;
+
+            p31 <= 8'd0;
+            p32 <= 8'd0;
+            p33 <= 8'd0;
+
+        end
+
+        else if (pixel_valid) begin
+
+            // Top row
+            p11 <= p12;
+            p12 <= p13;
+            p13 <= pixel_top;
+
+            // Middle row
+            p21 <= p22;
+            p22 <= p23;
+            p23 <= pixel_middle;
+
+            // Bottom row
+            p31 <= p32;
+            p32 <= p33;
+            p33 <= pixel_bottom;
+
+        end
+
+    end
+
+endmodule
